@@ -160,7 +160,7 @@ async def browser_search_tool(reference, keys):
                     await page.goto(google_url, timeout=10000)
                     await asyncio.sleep(2)
 
-                    # Détection simple du CAPTCHA Google (URL et input uniquement)
+                                        # Détection simple du CAPTCHA Google (URL et input uniquement)
                     captcha_input = await page.query_selector("input[name='captcha']")
                     captcha_detected = (
                         "sorry/index" in page.url or
@@ -188,6 +188,7 @@ async def browser_search_tool(reference, keys):
                                 print("[CAPTCHA] Plus aucune raison de blocage détectée, reprise.")
                                 resolved = True
                         progress_dialog.Update(28, "CAPTCHA résolu. Reprise de la recherche...")
+
 
 
                     progress_dialog.Update(30, "Locating manufacturer...")
@@ -335,14 +336,13 @@ async def browser_search_tool(reference, keys):
                                 
                                     #need to extract the data from the dl tag 
                                     try:
-                                        # Extraction des données du tableau
                                         rows = await page.query_selector_all("dl.product-summary dt, dl.product-summary dd")
                                         for i in range(0, len(rows), 2):
                                             key = await rows[i].inner_text()
                                             value = await rows[i+1].inner_text()
                                             data[key] = value
 
-                                            # check tool type
+                                            #check tool type
                                             if "rayon" in key:
                                                 data["toolType"] = "1"
                                             elif "hémisphérique" in key:
@@ -350,9 +350,10 @@ async def browser_search_tool(reference, keys):
                                             elif "Perçage" in key:
                                                 data["toolType"] = "7"
                                                 ### data["neckAngle"] = "140"
+
+
                                     except Exception as e:
                                         print(f"Error extracting table data: {e}")
-
                                     try:
                                         # Find the table row that matches the reference number
                                         rows = await page.query_selector_all("#table-product tbody tr")
@@ -363,11 +364,24 @@ async def browser_search_tool(reference, keys):
                                                 # Extract values from the matching row
                                                 d1 = await (await row.query_selector("td:nth-child(2)")).inner_text()
                                                 l1 = await (await row.query_selector("td:nth-child(3)")).inner_text()
-                                                # ... autres extractions ...
-                                                if "sorry/index" in page.url or "captcha" in page.url or await page.query_selector("input[name='captcha']"):
-                                                    break
+                                                d = await (await row.query_selector("td:nth-child(4)")).inner_text()
+                                                l = await (await row.query_selector("td:nth-child(5)")).inner_text()
+                                                z = await (await row.query_selector("td:nth-child(6)")).inner_text()
+                                                matter = await (await row.query_selector("td:nth-child(7)")).inner_text()
+                                                step = await (await row.query_selector("td:nth-child(9)")).inner_text()
+                                                data["DC"] = d1
+                                                data["APMXS"] = l1
+                                                data["DCONMS"] = d
+                                                data["OAL"] = l
+                                                data["ZEFP"] = z
+                                                data["toolMaterial"] = matter
+                                                data["mfrRef"] = ref_serial
+                                                #fix drill type
+                                                data["FHA"] = '140'
+                                                break
                                     except Exception as e:
-                                        print(f"Error extracting table data: {e}")
+                                        print(f"Error extracting table data: {e}")   
+                                        
                                     break
 
                                 elif ("fraisa" in href):
@@ -529,7 +543,7 @@ async def browser_search_tool(reference, keys):
                                     accept_cookies = await page.query_selector("button#onetrust-accept-btn-handler")
                                     if accept_cookies:
                                         await accept_cookies.click()
-                                    await asyncio.sleep(10)
+                                    await asyncio.sleep(5)
                                     bracket = await page.query_selector("i.icon-bracket-down")
                                     if bracket:
                                         await bracket.click()
@@ -749,7 +763,7 @@ async def browser_search_tool(reference, keys):
             except Exception as e:
                 print(f"Error: {e}")
                 await browser.close()
-                progress_dialog.Destroy()
+                progress_dialog.Destroy()  
 
 # Example usage
 # asyncio.run(search_tool("1B230-1400-XA 1630", "keys.txt"))
